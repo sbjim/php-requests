@@ -8,6 +8,8 @@
 
 namespace think;
 
+use function Couchbase\defaultDecoder;
+
 /**
  * php http请求
  * Class Requests
@@ -15,7 +17,7 @@ namespace think;
  */
 class Requests
 {
-    use Args;
+//    use Args;
 
     private static $_instance = null;
 
@@ -30,21 +32,24 @@ class Requests
 
     public static function getInstance()
     {
-        if (!is_null(self::$_instance)) {
-            self::$_instance = new self;
+
+        if (is_null(self::$_instance)) {
+            self::$_instance = new static();
         }
+
         return self::$_instance;
     }
 
     public function get(string $url, array $data = [], array $headers = [], array $options = [])
     {
-        return $url;
+        $response =  $this->sendRequest($url,$data,$headers,'get',$options);
+        return $response;
     }
 
     public function post(string $url, array $data = [], array $headers = [], array $options = [])
     {
-        $this->sendRequest();
-        return $url;
+        $response =  $this->sendRequest($url,$data,$headers,'post',$options);
+        return $response;
     }
 
 
@@ -60,13 +65,14 @@ class Requests
     {
         $method = strtoupper($method);
         $protocol = substr($url, 0, 5);
-        $query_string = is_array($params) ? http_build_query($params) : $params;
+        $query_string = is_array($params) ? http_build_query($params) : '';
 
         $ch = curl_init();
         $defaults = [];
         if ('GET' == $method) {
             $geturl = $query_string ? $url . (stripos($url, "?") !== false ? "&" : "?") . $query_string : $url;
             $defaults[CURLOPT_URL] = $geturl;
+
         } else {
             $defaults[CURLOPT_URL] = $url;
             if ($method == 'POST') {
@@ -101,6 +107,8 @@ class Requests
         $ret = curl_exec($ch);
         $err = curl_error($ch);
 
+        echo json_decode($ret,true);
+        die(1);
         if (false === $ret || !empty($err)) {
             $errno = curl_errno($ch);
             $info = curl_getinfo($ch);  //状态信息
@@ -121,3 +129,16 @@ class Requests
 
 
 }
+
+$requests = Requests::getInstance();
+$url = 'https://apinew.juejin.im/tag_api/v1/query_topic_list';
+$url = 'https://apinew.juejin.im/user_api/v1/user/get';
+
+$data['aid'] = 2608;
+$data['user_id'] = '1987506650747293';
+$data['not_self'] = 1;
+$response = $requests->get($url,$data);
+//$response = $requests->post($url,$data);
+
+var_dump($response);
+
