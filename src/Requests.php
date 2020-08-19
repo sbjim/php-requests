@@ -8,7 +8,6 @@
 
 namespace think;
 
-use function Couchbase\defaultDecoder;
 
 /**
  * php http请求
